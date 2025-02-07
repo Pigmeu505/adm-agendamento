@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="painel.css">
+  <title>Painel de Administração</title>
+</head>
+<body>
+  <h2>Agendamentos</h2>
+  <table border="1">
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>Telefone</th> <!-- Alterado de Email para Telefone -->
+        <th>Data</th>
+        <th>Hora</th>
+        <th>Ação</th>
+      </tr>
+    </thead>
+    <tbody id="tabelaAgendamentos">
+      <!-- Os agendamentos serão listados aqui -->
+    </tbody>
+  </table>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  
+    // Configuração do Firebase (substitua pelos seus dados)
+    const firebaseConfig = {
+      apiKey: "AIzaSyCuzKA2uk5ev5RAk_ksX1xLN0fungTUw0c",
+      authDomain: "agendamentos-9eae2.firebaseapp.com",
+      projectId: "agendamentos-9eae2",
+      storageBucket: "agendamentos-9eae2.firebasestorage.app",
+      messagingSenderId: "310417942204",
+      appId: "1:310417942204:web:b27f416b763250803352b9",
+    };
+  
+    // Inicializar Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+  
+    // Função para listar os agendamentos
+    async function carregarAgendamentos() {
+      const tabela = document.getElementById("tabelaAgendamentos");
+      tabela.innerHTML = ""; // Limpa a tabela antes de atualizar
+  
+      try {
+        const querySnapshot = await getDocs(collection(db, "agendamentos"));
+        console.log("Carregando agendamentos...");
+  
+        if (querySnapshot.empty) {
+          tabela.innerHTML = "<tr><td colspan='5'>Nenhum agendamento encontrado</td></tr>";
+        } else {
+          querySnapshot.forEach((doc) => {
+            const agendamento = doc.data();
+            const row = `
+              <tr>
+                <td>${agendamento.nome}</td>
+                <td>${agendamento.telefone}</td> <!-- Alterado para telefone -->
+                <td>${agendamento.data}</td>
+                <td>${agendamento.hora}</td>
+                <td><button class="excluir" data-id="${doc.id}">Excluir</button></td>
+              </tr>
+            `;
+            tabela.innerHTML += row;
+          });
+  
+          // Adicionar eventos de clique para os botões de excluir
+          const buttons = document.querySelectorAll('.excluir');
+          buttons.forEach(button => {
+            button.addEventListener('click', (event) => {
+              const agendamentoId = event.target.getAttribute('data-id');
+              deletarAgendamento(agendamentoId);
+            });
+          });
+        }
+      } catch (e) {
+        console.error("Erro ao carregar agendamentos: ", e);
+      }
+    }
+  
+    // Função para excluir um agendamento
+    async function deletarAgendamento(id) {
+      if (confirm("Tem certeza que deseja excluir este agendamento?")) {
+        await deleteDoc(doc(db, "agendamentos", id));
+        alert("Agendamento excluído!");
+        carregarAgendamentos(); // Recarrega a lista
+      }
+    }
+  
+    // Carregar os agendamentos ao abrir o painel
+    carregarAgendamentos();
+  </script>
+</body>
+</html>
